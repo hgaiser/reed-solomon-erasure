@@ -9,6 +9,8 @@ use smallvec::SmallVec;
 use crate::errors::Error;
 use crate::errors::SBSError;
 
+use crate::galois_8::EXP_TABLE;
+use crate::galois_8::LOG_TABLE;
 use crate::matrix::Matrix;
 
 use lru::LruCache;
@@ -432,7 +434,23 @@ impl<F: Field> ReedSolomon<F> {
 
         let top = vandermonde.sub_matrix(0, 0, data_shards, data_shards);
 
-        vandermonde.multiply(&top.invert().unwrap())
+        let mut vandermonde = vandermonde.multiply(&top.invert().unwrap());
+
+        let parity_shards = total_shards - data_shards;
+        let mut inverse = vec![0u8; F::ORDER];
+        inverse[0] = 0;
+        inverse[1] = 1;
+        for i in 2..F::ORDER {
+            inverse[i] = EXP_TABLE[(255 - LOG_TABLE[i]) as usize];
+        }
+
+        for j in 0..parity_shards {
+            for i in 0..data_shards {
+                vandermonde.data[(data_shards + j)*data_shards + i] = F::nth(inverse[(parity_shards + i) ^ j] as usize);
+            }
+        }
+
+        vandermonde
     }
 
     /// Creates a new instance of Reed-Solomon erasure code encoder/decoder.
