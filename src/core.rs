@@ -453,6 +453,17 @@ impl<F: Field> ReedSolomon<F> {
         vandermonde
     }
 
+    pub fn set_parity_matrix(&mut self, parity: &[u8; 8]) {
+        self.matrix.data[16] = F::nth(parity[0].into());
+        self.matrix.data[17] = F::nth(parity[1].into());
+        self.matrix.data[18] = F::nth(parity[2].into());
+        self.matrix.data[19] = F::nth(parity[3].into());
+        self.matrix.data[20] = F::nth(parity[4].into());
+        self.matrix.data[21] = F::nth(parity[5].into());
+        self.matrix.data[22] = F::nth(parity[6].into());
+        self.matrix.data[23] = F::nth(parity[7].into());
+    }
+
     /// Creates a new instance of Reed-Solomon erasure code encoder/decoder.
     ///
     /// Returns `Error::TooFewDataShards` if `data_shards == 0`.
